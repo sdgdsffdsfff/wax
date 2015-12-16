@@ -29,7 +29,7 @@ static int customInitMethodClosure(lua_State *L);
 
 static BOOL overrideMethod(lua_State *L, wax_instance_userdata *instanceUserdata);
 static int pcallUserdata(lua_State *L, id self, SEL selector, va_list args);
-static BOOL overrideMethodByInvocation(id klass, SEL selector, char *returnType);
+static BOOL overrideMethodByInvocation(id klass, SEL selector, char *typeDescription, char *returnType);
 static BOOL addMethodByInvocation(id klass, SEL selector, char * typeDescription) ;
 
 
@@ -617,8 +617,10 @@ static int pcallUserdataARM64Invocation(lua_State *L, id self, SEL selector, NSI
     for (NSUInteger i = 2; i < [signature numberOfArguments]; i++) { // start at 2 because to skip the automatic self and _cmd arugments
         const char *type = [signature getArgumentTypeAtIndex:i];
         const char *typeDescription = wax_removeProtocolEncodings(type);
-        
-        int size = wax_sizeOfTypeDescription(typeDescription);
+//        int size = wax_sizeOfTypeDescription(typeDescription);//should use NSGetSizeAndAlignment ?
+        NSUInteger size = 0;
+        NSGetSizeAndAlignment(type, &size, NULL);
+    
         void *buffer = malloc(size);
         [anInvocation getArgument:buffer atIndex:i];
         
@@ -711,7 +713,7 @@ static BOOL overrideMethod(lua_State *L, wax_instance_userdata *instanceUserdata
     Method method = class_getInstanceMethod(klass, selector);
         
     if (method) { // Is method defined in the superclass?
-        typeDescription = (char *)method_getTypeEncoding(method);        
+        typeDescription = (char *)method_getTypeEncoding(method);
         returnType = method_copyReturnType(method);
     }
     else { // Is this method implementing a protocol?
@@ -753,7 +755,7 @@ static BOOL overrideMethod(lua_State *L, wax_instance_userdata *instanceUserdata
             luaL_error(L, "Trying to override method '%s' on an instance. You can only override classes", methodName);
         }
         
-        success = overrideMethodByInvocation(klass, selector, returnType);
+        success = overrideMethodByInvocation(klass, selector, typeDescription,returnType);
     }
     else {
 		SEL possibleSelectors[2];
@@ -779,7 +781,7 @@ static BOOL overrideMethod(lua_State *L, wax_instance_userdata *instanceUserdata
                 typeDescription = (char *)method_getTypeEncoding(method);
                 returnType = method_copyReturnType(method);
                 
-                success = overrideMethodByInvocation(metaclass, selector, returnType);
+                success = overrideMethodByInvocation(metaclass, selector, typeDescription, returnType);
                 if(returnType) free(returnType);
             } else {//no method, then add it both
                 
@@ -813,7 +815,7 @@ static SEL getORIGSelector(SEL selector){
 static BOOL isMethodReplacedByInvocation(id klass, SEL selector){
     Method selectorMethod = class_getInstanceMethod(klass, selector);
     IMP imp = method_getImplementation(selectorMethod);
-#if WAX_IS_ARM_64 == 1
+#if defined(__arm64__)
     return imp == _objc_msgForward;
 #else
     return imp == _objc_msgForward || imp == (IMP)_objc_msgForward_stret;
@@ -826,7 +828,7 @@ static void replaceMethodAndGenerateORIG(id klass, SEL selector, IMP newIMP){
     
     IMP prevImp = class_replaceMethod(klass, selector, newIMP, typeDescription);
     if(prevImp == newIMP){
-        NSLog(@"Repetition replace but, never mind");
+//        NSLog(@"Repetition replace but, never mind");
         return ;
     }
     
@@ -837,15 +839,15 @@ static void replaceMethodAndGenerateORIG(id klass, SEL selector, IMP newIMP){
     SEL newSelector = sel_getUid(newSelectorName);
     if(!class_respondsToSelector(klass, newSelector)) {
         BOOL res = class_addMethod(klass, newSelector, prevImp, typeDescription);
-        NSLog(@"res=%d", res);
+//        NSLog(@"res=%d", res);
     }
 }
 
 static void hookForwardInvocation(id self, SEL sel, NSInvocation *anInvocation){
-    NSLog(@"self=%@ sel=%s", self, anInvocation.selector);
-    NSLog(@"Fun:%s Line:%d", __PRETTY_FUNCTION__, __LINE__);
+//    NSLog(@"self=%@ sel=%s", self, anInvocation.selector);
+//    NSLog(@"Fun:%s Line:%d", __PRETTY_FUNCTION__, __LINE__);
     if(isMethodReplacedByInvocation(object_getClass(self), anInvocation.selector)){//instance->class, class->metaClass
-        NSLog(@"Fun:%s Line:%d", __PRETTY_FUNCTION__, __LINE__);
+//        NSLog(@"Fun:%s Line:%d", __PRETTY_FUNCTION__, __LINE__);
         lua_State *L = wax_currentLuaState();
         BEGIN_STACK_MODIFY(L);
         int result = pcallUserdataARM64Invocation(L, self, anInvocation.selector, anInvocation);
@@ -864,20 +866,22 @@ static void hookForwardInvocation(id self, SEL sel, NSInvocation *anInvocation){
         }
         END_STACK_MODIFY(L, 0);
     }else{//cal original forwardInvocation method
-        ((void(*)(id, SEL, id))objc_msgSend)(self, getORIGSelector(sel), anInvocation);
+        ((void(*)(id, SEL, id))objc_msgSend)(self, @selector(ORIGforwardInvocation:), anInvocation);
     };
 }
 
-static BOOL overrideMethodByInvocation(id klass, SEL selector, char *returnType) {
+static BOOL overrideMethodByInvocation(id klass, SEL selector, char *typeDescription, char *returnType) {
+    IMP forwardImp = _objc_msgForward;
+#if !defined(__arm64__)
     if(strlen(returnType) > 0 && returnType[0] == '{'){//return struct
-#if WAX_IS_ARM_64 == 1
-        replaceMethodAndGenerateORIG(klass, selector, (IMP)_objc_msgForward);//trigger forwardInvocation
-#else
-        replaceMethodAndGenerateORIG(klass, selector, (IMP)_objc_msgForward_stret);//trigger forwardInvocation
-#endif
-    }else{
-        replaceMethodAndGenerateORIG(klass, selector, _objc_msgForward);//trigger forwardInvocation
+        NSMethodSignature *methodSignature = [NSMethodSignature signatureWithObjCTypes:typeDescription];
+        if ([methodSignature.debugDescription rangeOfString:@"is special struct return? YES"].location != NSNotFound) {
+            forwardImp = (IMP)_objc_msgForward_stret;
+        }
     }
+#endif
+    
+    replaceMethodAndGenerateORIG(klass, selector, forwardImp);//trigger forwardInvocation
     
     if(!isMethodReplacedByInvocation(klass, @selector(forwardInvocation:))){//just replace once
         

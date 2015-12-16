@@ -1,6 +1,8 @@
 Wax is being maintained by Alibaba
 ----------
 
+[![Join the chat at https://gitter.im/alibaba/wax](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/alibaba/wax?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+
 Thanks to @probablycorey for creating such a greate project.
 Wax is the best bridge between Lua and Objective-C, we will be maintaining it here. We have fixed a lot of issues such as 64-bit support and thread-safety. We have also added many features such as converting Lua functions to OC blocks, calling OC blocks in Lua, getting/setting private ivars, built-in commonly used C functions, and even Lua code debugging.
 
@@ -147,7 +149,7 @@ What about calling Objective-C blocks?
 
 ``` lua
 --OC block type is id (^)(NSInteger, id, BOOL, CGFloat)
-local res = luaCallBlock(block, 123456, aObject, true, 123.456,);
+local res = luaCallBlock(block, 123456, aObject, true, 123.456);
 
 --or you can call like this:
 local res = luaCallBlockWithParamsTypeArray(block, {"id","NSInteger", "id", "BOOL", "CGFloat"},  123456, aObject, true, 123.456);
@@ -168,7 +170,7 @@ print(toobjc(self:getIvarObject("_infoDict")))
 You want to call some C functions?
 
 ``` lua
-luaSetWaxConfig({wax_openBindOCFunction=true})--bind built-in C function
+luaSetWaxConfig({openBindOCFunction=true})--bind built-in C function
 
 dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), 
         toblock(
@@ -189,13 +191,21 @@ local data = UIImageJPEGRepresentation(image, 0.8);
 print("data.length=", data:length());
 ```
 
+Lua code debug
+------
 Any way to debug my Lua code?   
 Ofcourse, you can use the powerfull ZeroBraneStudio to debug. [see more detail](https://github.com/alibaba/wax/tree/master/examples/LuaCodeDebug).
 
+Watch OS 
+------
+Can Wax run on watch OS?
+Thanks to the cross platform characteristics of Lua, Wax can run on watch OS certainly. see tools/WaxWatchFramework and examples/WaxWatchExample
+
+
 Use with cocoapods
 ----------
-see examples/TestWaxPod demo.  
-* add `pod 'wax', :git=>'git@github.com:alibaba/wax.git', :tag=>'1.0.0'` to your podfile. (tag in your needs)  
+see demo in `examples/InstallationExample/InstallWithCocoaPods` .  
+* add `pod 'wax', :git=>'https://github.com/alibaba/wax.git', :tag=>'1.1.0'` to your podfile. (tag in your needs)  
 * then you can run lua code.
 
 ``` lua
@@ -226,6 +236,8 @@ More
 * [Feature Requests? Bugs?](https://github.com/alibaba/wax/issues) - Issue tracking and release planning.
 * [Mailing List](http://groups.google.com/group/iphonewax)
 * Quick questions or issues? Send an email to [@Zhengwei Yin (Junzhan)](mailto:junzhan.yzw@taobao.com)
+* Communicate in gitter: [https://gitter.im/alibaba/wax](https://gitter.im/alibaba/wax)
+* Communicate in QQ group: 196306834
 
 Contribute
 ----------

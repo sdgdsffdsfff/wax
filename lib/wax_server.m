@@ -1,3 +1,6 @@
+#ifndef WAX_TARGET_OS_WATCH
+#warning "compile not for TARGET_OS_WATCH"
+
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <unistd.h>
@@ -8,6 +11,7 @@
 #import "lauxlib.h"
 
 static id gInstance;
+NSString * const TCPServerErrorDomain;
 
 static void TCPServerAcceptCallBack(CFSocketRef socket, CFSocketCallBackType type, CFDataRef address, const void *data, void *info);
 
@@ -250,3 +254,4 @@ static void TCPServerAcceptCallBack(CFSocketRef socket, CFSocketCallBackType typ
 
 @implementation HACK_WAX_DELEGATE_IMPLEMENTOR
 @end
+#endif

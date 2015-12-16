@@ -25,7 +25,7 @@ TEST_VALUE_bool = false
 TEST_VALUE_FLOAT = 123.456
 TEST_VALUE_CGFLOAT = 1234.5678
 TEST_VALUE_DOUBLE = 12345.6789
-
+TEST_VALUE_STRING = "abcdefg"
 
 
 function isDoubleEqual(a, b)
@@ -35,10 +35,10 @@ function isDoubleEqual(a, b)
 	return res
 end
 
-function toblock(func, paramTypes)
-if paramTypes == nil then
-return toobjc(func):luaVoidBlock()
-else
-return toobjc(func):luaBlockWithParamsTypeArray(paramTypes)
-end
-end
+-- function toblock(func, paramTypes)
+-- if paramTypes == nil then
+-- return toobjc(func):luaVoidBlock()
+-- else
+-- return toobjc(func):luaBlockWithParamsTypeArray(paramTypes)
+-- end
+-- end
