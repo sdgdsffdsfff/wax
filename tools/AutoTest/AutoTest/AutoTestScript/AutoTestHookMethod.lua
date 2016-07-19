@@ -155,7 +155,7 @@ end
 
 function initWithFrame(self, aCGRect)
     print("aCGRect=" .. tostring(aCGRect));
-    -- self = self.super:init();
+    self = self.super:init();
     return self
 end
 
@@ -198,3 +198,33 @@ function testReturnNSRangeWithaId_aNSRange(self, aId, aNSRange)
 	local range = NSRange(aNSRange.location+10, aNSRange.length+20);
 	return self:ORIGtestReturnNSRangeWithaId_aNSRange(aId, range);
 end
+---super method
+
+function testSuperMethodReturnId(self)
+	local aId = self.super:testSuperMethodReturnId()
+	assert(aId == TEST_VALUE_STRING);
+	print("LUA TEST SUCCESS: testSuperMethodReturnId")
+	return self
+end
+
+-- test dollar method 
+
+function DOLLARxMARKtestDolorMethod( self )
+	print("lua $testDolorMethod")
+	self:ORIGDOLLARxMARKtestDolorMethod()
+	return TEST_VALUE_STRING
+end
+
+function DOLLARxMARKtestDolorClassMethod( self )
+	print("lua $testDolorClassMethod")
+	self:ORIGDOLLARxMARKtestDolorClassMethod()
+	return TEST_VALUE_STRING
+end
+
+function UNDERxLINEDOLLARxMARKtestDOLLARxMARKDolorUNDERxLINEMethod_UNDERxLINEbDOLLARxMARK(self, v1, v2)
+	print("lua _$test$Dolor_Method:_b$:")
+	local res = self:ORIGUNDERxLINEDOLLARxMARKtestDOLLARxMARKDolorUNDERxLINEMethod_UNDERxLINEbDOLLARxMARK(v1, v2)
+	res = res .. TEST_VALUE_STRING
+	return res
+end
+

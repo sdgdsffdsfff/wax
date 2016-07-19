@@ -22,6 +22,8 @@
     [[self class] testHookClassMethod];
     [self testUnderlinePrefixMethod];
     [self testStructMethod];
+    [self testDollorMethod];
+
     //    [self testTimeConsuming];
 }
 
@@ -58,6 +60,8 @@
     NSAssert([self testHookaInteger:TEST_VALUE_INTEGER bId:[UIViewController new] cId:[UIView new] dId:[UILabel new]] == TEST_VALUE_INTEGER, @"FUN:%s LINE:%d", __PRETTY_FUNCTION__, __LINE__);
     
     NSAssert([self testHookaChar:TEST_VALUE_CHAR aInteger:TEST_VALUE_INTEGER aBOOL:YES aDouble:TEST_VALUE_DOUBLE aString:@"hij" aId:self] == TEST_VALUE_CHAR, @"FUN:%s LINE:%d", __PRETTY_FUNCTION__, __LINE__);
+    
+    NSAssert([self testSuperMethodReturnId] == self, @"FUN:%s LINE:%d", __PRETTY_FUNCTION__, __LINE__);
 }
 
 //char aChar, int aInt, NSInteger aInteger, BOOL aBOOL, bool aBool, char *aCharPointer, short aShort,  NSUInteger aUInteger, long long aLongLong, unsigned long long aULongLong, float aFloat, CGFloat aCGFloat, double aDouble, void *aVoidPointer, NSString *aString, id aId)
@@ -300,4 +304,29 @@
 - (NSRange)testReturnNSRangeWithaId:(id)aId aNSRange:(NSRange)aNSRange{
     return NSMakeRange(aNSRange.location+10, aNSRange.length+20);
 }
+
+
+#pragma mark $$ method
+- (void)testDollorMethod{
+    NSAssert([[self $testDolorMethod] isEqualToString:TEST_VALUE_STRING], @"$testDolorMethod failed");
+    NSAssert([[[self class] $testDolorClassMethod] isEqualToString:TEST_VALUE_STRING], @"$testDolorClassMethod failed");
+    ;
+    NSAssert([[self _$test$Dolor_Method:TEST_VALUE_STRING _b$:TEST_VALUE_STRING] isEqualToString:[TEST_VALUE_STRING stringByAppendingString:TEST_VALUE_STRING]], @"$testDolorMethod failed");
+}
+
+- (NSString *)$testDolorMethod{
+    NSLog(@"F:%s L:%d", __PRETTY_FUNCTION__, __LINE__);
+    return nil;
+}
+
++ (NSString *)$testDolorClassMethod{
+    NSLog(@"F:%s L:%d", __PRETTY_FUNCTION__, __LINE__);
+    return nil;
+}
+
+- (NSString *)_$test$Dolor_Method:(NSString *)v1 _b$:(NSString *)v2{
+    NSLog(@"F:%s L:%d", __PRETTY_FUNCTION__, __LINE__);
+    return v1;
+}
+
 @end

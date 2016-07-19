@@ -1,10 +1,8 @@
 #ifndef WAX_TARGET_OS_WATCH
-#warning "compile not for TARGET_OS_WATCH"
 
 #import <Foundation/Foundation.h>
 
 @class wax_server;
-
 
 
 typedef enum {
